@@ -14,6 +14,7 @@ import paho.mqtt.client as mqtt
 from argparse import ArgumentParser
 import json
 import Queue
+from common import *
 
 TOPIC_BASE = 'hue/'
 ERROR_TOPIC = TOPIC_BASE + 'error'
@@ -246,10 +247,7 @@ class HueBridge(threading.Thread):
 def main():
     desc = '%s [Args] [Options]\nDetailed options -h or --help' % __file__
     parser = ArgumentParser(description=desc)
-    parser.add_argument('-H', '--host', type=str, dest='host',
-                        default='localhost', help='hostname of MQTT')
-    parser.add_argument('-p', '--port', type=int, dest='port', default=1883,
-                        help='port of MQTT')
+    add_mqtt_arguments(parser)
     parser.add_argument('-l', '--logging', type=str, dest='logging',
                         default=None, help='path for logging.conf')
 
@@ -264,7 +262,7 @@ def main():
     browser = DeviceBrowser(mqtt_client)
     mqtt_client.on_connect = browser.on_connect
     mqtt_client.on_message = browser.on_message
-    mqtt_client.connect(args.host, args.port)
+    connect_mqtt(args, mqtt_client)
 
     browser.start()
 
