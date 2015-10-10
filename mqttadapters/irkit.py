@@ -51,9 +51,6 @@ class HostListener(object):
     def remove_service(self, zeroconf, type, name):
         logger.info('Service %s removed' % (name,))
         self._refresh_hosts()
-        host_info = {'status': 'removed', 'type': type, 'name': name}
-        self.mqtt_client.publish(get_topic(name),
-                                 payload=json.dumps(host_info))
         if name in self.hosts:
             self.hosts[name].inactivate()
 
@@ -69,19 +66,12 @@ class HostListener(object):
                 self.hosts[name] = host
                 host.start()
                 logger.info('Subscribe: %s' % get_messages_topic(name))
-                self.mqtt_client.subscribe(get_messages_topic(name))
             else:
                 self.hosts[name].activate()
 
-        host_info = {'status': 'added', 'type': type, 'name': name}
-        self.mqtt_client.publish(get_topic(name),
-                                 payload=json.dumps(host_info))
-
     def on_connect(self, client, userdata, flags, rc):
         logger.info('Connected rc=%d' % rc)
-        client.subscribe(topic_base + 'all/messages')
-        for name in self.hosts.keys():
-            client.subscribe(get_messages_topic(name))
+        client.subscribe(topic_base + '+/messages')
 
     def on_message(self, client, userdata, msg):
         try:
@@ -114,7 +104,6 @@ class HostListener(object):
                 for name in self.removed:
                     logger.info('Removed: %s' % name)
                     del self.hosts[name]
-                    self.mqtt_client.unsubscribe(get_messages_topic(name))
                 self.removed = []
 
 
@@ -186,6 +175,10 @@ class IRKitHost(threading.Thread):
             return False
 
     def run(self):
+        host_info = {'status': 'added', 'name': self.name}
+        self.mqtt_client.publish(get_topic(self.name),
+                                 payload=json.dumps(host_info))
+
         while(self._is_in_service()):
             try:
                 with self.sem:
@@ -203,8 +196,13 @@ class IRKitHost(threading.Thread):
             except:
                 logger.warning('Unexpected error: %s' % sys.exc_info()[0])
             time.sleep(CHECK_INTERVAL_SEC)
+            
         if self.on_finished:
             self.on_finished(self.name)
+            
+        host_info = {'status': 'removed', 'name': self.name}
+        self.mqtt_client.publish(get_topic(self.name),
+                                 payload=json.dumps(host_info))
 
 
 def main():
