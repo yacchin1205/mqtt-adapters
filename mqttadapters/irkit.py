@@ -175,7 +175,8 @@ class IRKitHost(threading.Thread):
             return False
 
     def run(self):
-        host_info = {'status': 'added', 'name': self.name}
+        host_info = {'status': 'added', 'name': self.name,
+                     'topic': {'messages': get_messages_topic(self.name)}}
         self.mqtt_client.publish(get_topic(self.name),
                                  payload=json.dumps(host_info))
 
@@ -200,7 +201,7 @@ class IRKitHost(threading.Thread):
         if self.on_finished:
             self.on_finished(self.name)
             
-        host_info = {'status': 'removed', 'name': self.name}
+        host_info['status'] = 'removed'
         self.mqtt_client.publish(get_topic(self.name),
                                  payload=json.dumps(host_info))
 

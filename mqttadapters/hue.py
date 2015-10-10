@@ -135,14 +135,16 @@ class DeviceBrowser(threading.Thread):
     def on_added(self, device):
         logger.info('Added: %s' % device.urlbase)
         host_info = {'status': 'added', 'urlbase': device.urlbase,
-                     'udn': device.udn}
+                     'udn': device.udn,
+                     'topic': {'light': get_topic(device.udn) + '/light'}}
         self.mqtt_client.publish(get_topic(device.udn),
                                  payload=json.dumps(host_info))
 
     def on_removed(self, device):
         logger.info('Removed: %s' % device.urlbase)
         host_info = {'status': 'removed', 'urlbase': device.urlbase,
-                     'udn': device.udn}
+                     'udn': device.udn,
+                     'topic': {'light': get_topic(device.udn) + '/light'}}
         self.mqtt_client.publish(get_topic(device.udn),
                                  payload=json.dumps(host_info))
 
@@ -219,14 +221,17 @@ class HueBridge(threading.Thread):
                     removed.append(lid)
             for lid in added:
                 lights[lid] = {'device': current[lid], 'last_status': None}
-                msg = {'id': lid, 'action': 'added',
-                       'name': current[lid].name}
+                msg = {'id': lid, 'action': 'added', 'name': current[lid].name,
+                       'topic': {'light': get_light_topic(self.device.udn,
+                                                          lid)}}
                 self.mqtt_client.publish(get_light_topic(self.device.udn, lid),
                                          payload=json.dumps(msg))
             for lid in removed:
                 old = lights[lid]['device']
                 del lights[lid]
-                msg = {'id': lid, 'action': 'removed', 'name': old.name}
+                msg = {'id': lid, 'action': 'removed', 'name': old.name,
+                       'topic': {'light': get_light_topic(self.device.udn,
+                                                          lid)}}
                 self.mqtt_client.publish(get_light_topic(self.device.udn, lid),
                                          payload=json.dumps(msg))
             for lid, light_entry in lights.items():
