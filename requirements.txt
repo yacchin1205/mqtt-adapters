@@ -1,0 +1,6 @@
+paho-mqtt
+zeroconf
+ipaddress
+requests
+phue
+
