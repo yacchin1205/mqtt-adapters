@@ -209,18 +209,13 @@ def main():
     desc = '%s [Args] [Options]\nDetailed options -h or --help' % __file__
     parser = ArgumentParser(description=desc)
     add_mqtt_arguments(parser, topic_default=DEFAULT_TOPIC_BASE)
-    parser.add_argument('-l', '--logging', type=str, dest='logging',
-                        default=None, help='path for logging.conf')
 
     args = parser.parse_args()
 
     global topic_base
     topic_base = args.topic
     
-    if args.logging:
-        logging.config.fileConfig(args.logging)
-    else:
-        logging.basicConfig()
+    logging.basicConfig(level=get_log_level(args))
 
     zeroconf = Zeroconf()
     mqtt_client = mqtt.Client()
