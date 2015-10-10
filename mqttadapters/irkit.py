@@ -16,23 +16,27 @@ from argparse import ArgumentParser
 from common import *
 
 SERVICE_TYPE = '_irkit._tcp.local.'
-TOPIC_BASE = 'irkit/'
-ERROR_TOPIC = TOPIC_BASE + 'error'
+DEFAULT_TOPIC_BASE = 'irkit/'
 CHECK_INTERVAL_SEC = 5.0
 SERVICE_TIMEOUT = 60
 
+topic_base = DEFAULT_TOPIC_BASE
 logger = logging.getLogger()
 
 
 def get_topic(name):
     if '.' in name:
-        return TOPIC_BASE + name[:name.index('.')].encode('utf8')
+        return topic_base + name[:name.index('.')].encode('utf8')
     else:
-        return TOPIC_BASE + name.encode('utf8')
+        return topic_base + name.encode('utf8')
 
 
 def get_messages_topic(name):
     return get_topic(name) + '/messages'
+
+
+def get_error_topic():
+    return topic_base + 'error'
 
 
 class HostListener(object):
@@ -75,7 +79,7 @@ class HostListener(object):
 
     def on_connect(self, client, userdata, flags, rc):
         logger.info('Connected rc=%d' % rc)
-        client.subscribe(TOPIC_BASE + 'all/messages')
+        client.subscribe(topic_base + 'all/messages')
         for name in self.hosts.keys():
             client.subscribe(get_messages_topic(name))
 
@@ -83,8 +87,8 @@ class HostListener(object):
         try:
             logger.info('Received: %s, %s' % (msg.topic, msg.payload))
             command = json.loads(msg.payload)
-            assert(msg.topic.startswith(TOPIC_BASE))
-            topic_sub = msg.topic[len(TOPIC_BASE):]
+            assert(msg.topic.startswith(topic_base))
+            topic_sub = msg.topic[len(topic_base):]
             assert(topic_sub.endswith('/messages'))
             to = topic_sub[:-len('/messages')]
             if to == 'all':
@@ -97,7 +101,7 @@ class HostListener(object):
         except (ValueError, IOError):
             logger.error('Unexpected error: %s' % sys.exc_info()[0])
             errorinfo = {'message': 'Error occurred: %s' % sys.exc_info()[0]}
-            client.publish(ERROR_TOPIC, payload=json.dumps(errorinfo))
+            client.publish(get_error_topic(), payload=json.dumps(errorinfo))
 
     def on_finished(self, name):
         logger.debug('Finished: %s' % name)
@@ -206,12 +210,15 @@ class IRKitHost(threading.Thread):
 def main():
     desc = '%s [Args] [Options]\nDetailed options -h or --help' % __file__
     parser = ArgumentParser(description=desc)
-    add_mqtt_arguments(parser)
+    add_mqtt_arguments(parser, topic_default=DEFAULT_TOPIC_BASE)
     parser.add_argument('-l', '--logging', type=str, dest='logging',
                         default=None, help='path for logging.conf')
 
     args = parser.parse_args()
 
+    global topic_base
+    topic_base = args.topic
+    
     if args.logging:
         logging.config.fileConfig(args.logging)
     else:

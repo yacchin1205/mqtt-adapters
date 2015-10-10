@@ -1,4 +1,4 @@
-def add_mqtt_arguments(parser):
+def add_mqtt_arguments(parser, topic_default):
     parser.add_argument('-H', '--host', type=str, dest='host',
                         default='localhost', help='hostname of MQTT')
     parser.add_argument('-p', '--port', type=int, dest='port', default=1883,
@@ -7,6 +7,9 @@ def add_mqtt_arguments(parser):
                         default=None, help='username for the broker')
     parser.add_argument('-P', '--password', type=str, dest='password',
                         default=None, help='password for the broker')
+    parser.add_argument('-t', '--topic', type=str, dest='topic',
+                        default=topic_default,
+                        help='Base topic name(default: {})'.format(topic_default))
                         
 def connect_mqtt(args, client):
     if args.username is not None:

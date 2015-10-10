@@ -16,20 +16,24 @@ import json
 import Queue
 from common import *
 
-TOPIC_BASE = 'hue/'
-ERROR_TOPIC = TOPIC_BASE + 'error'
+DEFAULT_TOPIC_BASE = 'hue/'
 
+topic_base = DEFAULT_TOPIC_BASE
 namespaces = {'upnp': 'urn:schemas-upnp-org:device-1-0'}
 logger = logging.getLogger()
 
 
 def get_topic(udn):
     assert(udn.startswith('uuid:'))
-    return TOPIC_BASE + udn[5:].encode('utf8')
+    return topic_base + udn[5:].encode('utf8')
 
 
 def get_light_topic(udn, light_id):
     return '%s/light/%s' % (get_topic(udn), light_id)
+
+
+def get_error_topic():
+    return topic_base + 'error'
 
 
 class DeviceInfo(object):
@@ -77,7 +81,7 @@ class DeviceBrowser(threading.Thread):
 
     def on_connect(self, client, userdata, flags, rc):
         logger.info('Connected rc=%d' % rc)
-        client.subscribe(TOPIC_BASE + '+/light/+/status')
+        client.subscribe(topic_base + '+/light/+/status')
 
     def on_message(self, client, userdata, msg):
         logger.info('Received: %s, %s' % (msg.topic, msg.payload))
@@ -91,7 +95,7 @@ class DeviceBrowser(threading.Thread):
         except (ValueError):
             logger.error('Unexpected error: %s' % sys.exc_info()[0])
             errorinfo = {'message': 'Error occurred: %s' % sys.exc_info()[0]}
-            client.publish(ERROR_TOPIC, payload=json.dumps(errorinfo))
+            client.publish(get_error_topic(), payload=json.dumps(errorinfo))
 
     def inactivate(self):
         with self.lock:
@@ -247,11 +251,14 @@ class HueBridge(threading.Thread):
 def main():
     desc = '%s [Args] [Options]\nDetailed options -h or --help' % __file__
     parser = ArgumentParser(description=desc)
-    add_mqtt_arguments(parser)
+    add_mqtt_arguments(parser, topic_default=DEFAULT_TOPIC_BASE)
     parser.add_argument('-l', '--logging', type=str, dest='logging',
                         default=None, help='path for logging.conf')
 
     args = parser.parse_args()
+    
+    global topic_base
+    topic_base = args.topic
 
     if args.logging:
         logging.config.fileConfig(args.logging)
