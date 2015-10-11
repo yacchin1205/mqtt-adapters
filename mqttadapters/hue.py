@@ -86,9 +86,9 @@ class DeviceBrowser(threading.Thread):
     def on_message(self, client, userdata, msg):
         logger.info('Received: %s, %s' % (msg.topic, msg.payload))
         try:
-            topic = msg.topic.split('/')
+            topic = msg.topic[len(topic_base):].split('/')
             status = json.loads(msg.payload)
-            light_id = topic[3]
+            light_id = topic[2]
             for dev in self.devices.values():
                 if msg.topic.startswith(dev['topic']):
                     dev['bridge'].change(light_id, status)
@@ -193,7 +193,7 @@ class HueBridge(threading.Thread):
         next_action = None
         while(self._in_service()):
             if next_action:
-                logger.debug('Changing... %s' % str(next_action))
+                logger.info('Changing... %s' % str(next_action))
                 light_id = next_action['id']
                 next_status = next_action['status']
                 if light_id in lights \
