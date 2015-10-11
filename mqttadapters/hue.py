@@ -259,7 +259,7 @@ def main():
     add_mqtt_arguments(parser, topic_default=DEFAULT_TOPIC_BASE)
 
     args = parser.parse_args()
-    
+
     global topic_base
     topic_base = args.topic
 

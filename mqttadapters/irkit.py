@@ -197,10 +197,10 @@ class IRKitHost(threading.Thread):
             except:
                 logger.warning('Unexpected error: %s' % sys.exc_info()[0])
             time.sleep(CHECK_INTERVAL_SEC)
-            
+
         if self.on_finished:
             self.on_finished(self.name)
-            
+
         host_info['status'] = 'removed'
         self.mqtt_client.publish(get_topic(self.name),
                                  payload=json.dumps(host_info))
@@ -215,7 +215,7 @@ def main():
 
     global topic_base
     topic_base = args.topic
-    
+
     logging.basicConfig(level=get_log_level(args))
 
     zeroconf = Zeroconf()
