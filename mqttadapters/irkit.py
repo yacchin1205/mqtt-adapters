@@ -216,7 +216,7 @@ def main():
     global topic_base
     topic_base = args.topic
 
-    logging.basicConfig(level=get_log_level(args))
+    logging.basicConfig(level=get_log_level(args), format=LOG_FORMAT)
 
     zeroconf = Zeroconf()
     mqtt_client = mqtt.Client()

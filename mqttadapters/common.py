@@ -1,5 +1,6 @@
 import logging
 
+LOG_FORMAT = '%(asctime)-15s %(levelname)s %(message)s'
 
 def add_mqtt_arguments(parser, topic_default):
     parser.add_argument('-H', '--host', type=str, dest='host',
