@@ -8,6 +8,7 @@ from urlparse import urlparse
 from phue import Bridge
 import threading
 import time
+import sys
 import logging
 import logging.config
 import paho.mqtt.client as mqtt
