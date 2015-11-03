@@ -208,41 +208,53 @@ class HueBridge(threading.Thread):
                         light.brightness = next_status['brightness']
                     if 'on' in next_status:
                         light.on = next_status['on']
+            logger.debug('Retrieving status of lights...')
             current = {}
             added = []
             removed = []
-            for l in b.lights:
-                current[b.get_light_id_by_name(l.name)] = l
-            for lid, light in current.items():
-                if lid not in lights:
-                    added.append(lid)
-            for lid, light in lights.items():
-                if lid not in current:
-                    removed.append(lid)
-            for lid in added:
-                lights[lid] = {'device': current[lid], 'last_status': None}
-                msg = {'id': lid, 'action': 'added', 'name': current[lid].name,
-                       'topic': {'light': get_light_topic(self.device.udn,
-                                                          lid)}}
-                self.mqtt_client.publish(get_light_topic(self.device.udn, lid),
-                                         payload=json.dumps(msg))
-            for lid in removed:
-                old = lights[lid]['device']
-                del lights[lid]
-                msg = {'id': lid, 'action': 'removed', 'name': old.name,
-                       'topic': {'light': get_light_topic(self.device.udn,
-                                                          lid)}}
-                self.mqtt_client.publish(get_light_topic(self.device.udn, lid),
-                                         payload=json.dumps(msg))
-            for lid, light_entry in lights.items():
-                light = light_entry['device']
-                status = {'on': light.on, 'saturation': light.saturation,
-                          'hue': light.hue, 'brightness': light.brightness}
-                if status != light_entry['last_status']:
-                    logger.debug('%s: status=%s' % (light.name, str(status)))
-                    light_entry['last_status'] = status
-                    topic = get_light_topic(self.device.udn, lid) + '/status'
-                    self.mqtt_client.publish(topic, payload=json.dumps(status))
+            try:
+                for l in b.lights:
+                    current[b.get_light_id_by_name(l.name)] = l
+                for lid, light in current.items():
+                    if lid not in lights:
+                        added.append(lid)
+                for lid, light in lights.items():
+                    if lid not in current:
+                        removed.append(lid)
+                for lid in added:
+                    lights[lid] = {'device': current[lid], 'last_status': None}
+                    msg = {'id': lid, 'action': 'added',
+                           'name': current[lid].name,
+                           'topic': {'light': get_light_topic(self.device.udn,
+                                                              lid)}}
+                    self.mqtt_client.publish(get_light_topic(self.device.udn,
+                                                             lid),
+                                             payload=json.dumps(msg))
+                for lid in removed:
+                    old = lights[lid]['device']
+                    del lights[lid]
+                    msg = {'id': lid, 'action': 'removed', 'name': old.name,
+                           'topic': {'light': get_light_topic(self.device.udn,
+                                                              lid)}}
+                    self.mqtt_client.publish(get_light_topic(self.device.udn,
+                                                             lid),
+                                             payload=json.dumps(msg))
+                for lid, light_entry in lights.items():
+                    light = light_entry['device']
+                    status = {'on': light.on, 'saturation': light.saturation,
+                              'hue': light.hue, 'brightness': light.brightness}
+                    if status != light_entry['last_status']:
+                        logger.debug('%s: status=%s' %
+                                     (light.name, str(status)))
+                        light_entry['last_status'] = status
+                        topic = '%s/status' % get_light_topic(self.device.udn,
+                                                              lid)
+                        self.mqtt_client.publish(topic,
+                                                 payload=json.dumps(status))
+            except:
+                logger.warning('Unexpected error: %s' % sys.exc_info()[0])
+
+            logger.debug('Retrieving finished')
             try:
                 next_action = self.actions.get(True, self.interval)
             except Queue.Empty:
