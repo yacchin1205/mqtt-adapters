@@ -204,6 +204,9 @@ class HueBridge(threading.Thread):
                         lights[light_id]['last_status'] = {}
                     last_status = lights[light_id]['last_status']
                     light = lights[light_id]['device']
+                    if next_status['on']:
+                        last_status['on'] = next_status['on']
+                        light.on = next_status['on']
                     if 'hue' in next_status:
                         last_status['hue'] = next_status['hue']
                         light.hue = next_status['hue']
@@ -213,7 +216,8 @@ class HueBridge(threading.Thread):
                     if 'brightness' in next_status:
                         last_status['brightness'] = next_status['brightness']
                         light.brightness = next_status['brightness']
-                    if 'on' in next_status:
+                    if 'on' in next_status and \
+                       last_status['on'] != next_status['on']:
                         last_status['on'] = next_status['on']
                         light.on = next_status['on']
                 else:
