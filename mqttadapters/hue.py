@@ -200,15 +200,24 @@ class HueBridge(threading.Thread):
                 if light_id in lights \
                    and lights[light_id]['last_status'] != next_status:
                     logger.info('Change: %s, %s' % (light_id, next_status))
+                    if lights[light_id]['last_status'] is None:
+                        lights[light_id]['last_status'] = {}
+                    last_status = lights[light_id]['last_status']
                     light = lights[light_id]['device']
                     if 'hue' in next_status:
+                        last_status['hue'] = next_status['hue']
                         light.hue = next_status['hue']
                     if 'saturation' in next_status:
+                        last_status['saturation'] = next_status['saturation']
                         light.saturation = next_status['saturation']
                     if 'brightness' in next_status:
+                        last_status['brightness'] = next_status['brightness']
                         light.brightness = next_status['brightness']
                     if 'on' in next_status:
+                        last_status['on'] = next_status['on']
                         light.on = next_status['on']
+                else:
+                    logger.info('Ignored: %s, %s' % (light_id, next_status))
             logger.debug('Retrieving status of lights...')
             current = {}
             added = []
