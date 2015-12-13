@@ -77,29 +77,25 @@ on search_for_playlist(track_name, playlist_name)
     end tell
 end search_for_playlist
 
-on search_for_album(track_name, album_title)
+on search_for_album(album_title)
     tell application "iTunes"
         set music_playlist to (get some playlist whose special kind is Music)
         set search_result to search music_playlist for album_title only albums
         set infos to {}
         repeat with result_item in search_result
-            if album of result_item contains album_title and name of result_item contains track_name
-                set the end of infos to {track_name: name of result_item, track_artist: artist of result_item, track_album: album of result_item, playlist_name:name of music_playlist}
-            end if
+            set the end of infos to {track_name: name of result_item, track_artist: artist of result_item, track_album: album of result_item, playlist_name:name of music_playlist}
         end repeat
         return infos
     end tell
 end search_for_album
 
-on search_for_artist(track_name, artist_name)
+on search_for_artist(artist_name)
     tell application "iTunes"
         set music_playlist to (get some playlist whose special kind is Music)
         set search_result to search music_playlist for artist_name only artists
         set infos to {}
         repeat with result_item in search_result
-            if artist of result_item contains artist_name and name of result_item contains track_name
-                set the end of infos to {track_name: name of result_item, track_artist: artist of result_item, track_album: album of result_item, playlist_name:name of music_playlist}
-            end if
+            set the end of infos to {track_name: name of result_item, track_artist: artist of result_item, track_album: album of result_item, playlist_name:name of music_playlist}
         end repeat
         return infos
     end tell
@@ -208,11 +204,17 @@ class LibraryBrowser(threading.Thread):
         if 'playlist_name' in track_info:
             results = script.call('search_for_playlist', track_info['track_name'], track_info['playlist_name'])
         elif 'track_album' in track_info:
-            results = script.call('search_for_album', track_info['track_name'], track_info['track_album'])
+            results = script.call('search_for_album', track_info['track_album'])
         elif 'track_artist' in track_info:
-            results = script.call('search_for_artist', track_info['track_name'], track_info['track_artist'])
+            results = script.call('search_for_artist', track_info['track_artist'])
         else:
             raise ValueError('Insufficient parameters: {}'.format(track_info))
+        if 'track_album' in track_info:
+            results = filter(lambda i: track_info['track_album'] in i['track_album'], results)
+        if 'track_artist' in track_info:
+            results = filter(lambda i: track_info['track_artist'] in i['track_artist'], results)
+        if 'track_name' in track_info:
+            results = filter(lambda i: track_info['track_name'] in i['track_name'], results)
         logger.info('Search result: {}'.format(results))
         self.mqtt_client.publish(self._get_topic('candidates'), payload=json.dumps(results))
         if len(results) == 1:
