@@ -3,4 +3,4 @@ zeroconf
 ipaddress
 requests
 phue
-
+py-applescript
