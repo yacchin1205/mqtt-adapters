@@ -162,8 +162,11 @@ class IRKitHost(threading.Thread):
             with self.sem:
                 session = requests.Session()
                 resp = session.post('http://%s/messages' % self.host,
-                                    data=json.dumps(messages), timeout=5.0)
-                logger.info("Successful: %s" % resp.content)
+                                    data=json.dumps(messages),
+                                    headers={'X-Requested-With': 'homeui'},
+                                    timeout=5.0)
+                logger.debug("Response: %s (status_code=%d)" % (resp.content, resp.status_code))
+                resp.raise_for_status()
 
     def _is_in_service(self):
         with self.lock:
@@ -185,8 +188,10 @@ class IRKitHost(threading.Thread):
                 with self.sem:
                     session = requests.Session()
                     resp = session.get('http://%s/messages' % self.host,
+                                       headers={'X-Requested-With': 'homeui'},
                                        timeout=3.0)
-                logger.debug('GET "%s" from %s' % (resp.content, self.host))
+                logger.debug('GET "%s" from %s (status_code=%d)' % (resp.content, self.host, resp.status_code))
+                resp.raise_for_status()
                 if resp.content:
                     msg = resp.json()
                     topic = get_messages_topic(self.name)
