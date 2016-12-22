@@ -1,4 +1,5 @@
 import logging
+import ssl
 
 LOG_FORMAT = '%(asctime)-15s %(levelname)s %(message)s'
 
@@ -11,6 +12,8 @@ def add_mqtt_arguments(parser, topic_default):
                         default=None, help='username for the broker')
     parser.add_argument('-P', '--password', type=str, dest='password',
                         default=None, help='password for the broker')
+    parser.add_argument('--cafile', type=str, dest='cafile',
+                        default=None, help='path to a file of CA certs')
     parser.add_argument('-t', '--topic', type=str, dest='topic',
                         default=topic_default,
                         help='Base topic name(default: {})'
@@ -23,7 +26,12 @@ def add_mqtt_arguments(parser, topic_default):
 
 def connect_mqtt(args, client):
     if args.username is not None:
-        client.username_pw_set(args.username, args.password)
+        if args.password is not None:
+            client.username_pw_set(args.username, args.password)
+        else:
+            client.username_pw_set(args.username)
+    if args.cafile is not None:
+        client.tls_set(args.cafile, tls_version=ssl.PROTOCOL_TLSv1)
     client.connect(args.host, args.port)
 
 
