@@ -86,6 +86,7 @@ class GrovePiHost(threading.Thread):
                             msg = None
 
                         if msg is not None:
+                            logger.info('Publish: {}'.format(msg))
                             self.lastTime = time.time()
                             self.lastValue = int(sensor_value / 10)
                             topic = get_light_topic(self.name)
