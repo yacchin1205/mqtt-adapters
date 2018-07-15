@@ -158,6 +158,9 @@ class IRKitHost(threading.Thread):
         if self.queue.has(messages):
             logger.debug('Skipped: already received messages')
         else:
+            if 'd' in messages:
+                messages['data'] = messages['d']
+                del messages['d']
             logger.info('Sending "%s"' % str(messages))
             with self.sem:
                 session = requests.Session()
