@@ -15,7 +15,7 @@ from socket import gethostname
 
 DEFAULT_TOPIC_BASE = 'grovepi/'
 CHECK_INTERVAL_SEC = 1.0
-MAX_INTERVAL = 60 * 5
+MAX_INTERVAL = 60 * 10
 
 topic_base = DEFAULT_TOPIC_BASE
 logger = logging.getLogger()
@@ -82,13 +82,13 @@ class GrovePiHost(threading.Thread):
                         if self.lastValue is not None and \
                            self.lastTime is not None and \
                            self.lastTime + MAX_INTERVAL > time.time() and \
-                           self.lastValue == int(sensor_value / 10):
+                           abs(self.lastValue - sensor_value) < 10:
                             msg = None
 
                         if msg is not None:
                             logger.info('Publish: {}'.format(msg))
                             self.lastTime = time.time()
-                            self.lastValue = int(sensor_value / 10)
+                            self.lastValue = sensor_value
                             topic = get_light_topic(self.name)
                             self.mqtt_client.publish(topic,
                                                      payload=json.dumps(msg))
