@@ -3,7 +3,7 @@
 from setuptools import setup
 
 setup(name='MQTTAdapter',
-      version='0.1.1',
+      version='0.2.0',
       description='MQTT Adapters for Smart home devices',
       author='Satoshi Yazawa',
       author_email='yazawa@yzwlab.net',
@@ -15,5 +15,6 @@ setup(name='MQTTAdapter',
                     ['mqtt-irkit=mqttadapters.irkit:main',
                      'mqtt-hue=mqttadapters.hue:main',
                      'mqtt-itunes=mqttadapters.itunes:main',
-                     'mqtt-grovepi=mqttadapters.grove:main']},
+                     'mqtt-grovepi=mqttadapters.grove:main',
+                     'mqtt-nature=mqttadapters.nature:main']},
       )
